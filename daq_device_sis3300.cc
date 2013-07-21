@@ -78,6 +78,16 @@ int daq_device_sis3300::put_data(const int etype, int * adr, const int length )
 {
   //  cout << __LINE__ << "  " << __FILE__ << " etype= " << etype << " adr= " << adr << " length= " << length << endl;
 
+  if (etype != m_eventType )  // not our id
+    {
+      return 0;
+    }
+
+  if ( !m_subeventid)  // this feature allows us to use this device without hardware 
+    {
+      return 0;
+    }
+
   if ( _broken ) 
     {
       cout << __LINE__ << "  " << __FILE__ << " broken ";
@@ -86,11 +96,6 @@ int daq_device_sis3300::put_data(const int etype, int * adr, const int length )
     }
 
   int len = 0;
-
-  if (etype != m_eventType )  // not our id
-    {
-      return 0;
-    }
 
   sevt =  (subevtdata_ptr) adr;
   // set the initial subevent length
@@ -188,9 +193,17 @@ void daq_device_sis3300::identify(std::ostream& os) const
 {
   unsigned int x1;
   uint32_t address = _baseaddress + SIS3300_ID;
-  cout <<  __FILE__ << " " << __LINE__ << " Address is " << hex << address << dec << endl;
+  //  cout <<  __FILE__ << " " << __LINE__ << " Address is " << hex << address << dec << endl;
 
-  
+  if ( !m_subeventid)  // this feature allows us to use this device without hardware 
+    {
+      os  << "DUMMY Device SIS" <<  " Event Type: " << m_eventType << " Subevent id: " << m_subeventid;
+      if ( _th) os << " trigger ";
+      if ( _broken) os << " ** not functional ** ";
+      os << endl;
+      return ;
+    }
+
   CAENVME_API ret = CAENVME_ReadCycle (_handle, address , &x1, cvA32_U_DATA, cvD32);
   if ( ret) cout << __FILE__ << " " << __LINE__ << " return code " << ret << endl;
 
@@ -217,6 +230,10 @@ int daq_device_sis3300::max_length(const int etype) const
 int  daq_device_sis3300::init()
 {
 
+  if ( !m_subeventid)  // this feature allows us to use this device without hardware 
+    {
+      return 0;
+    }
   set_3300_value (SIS3300_RESET , 1);  //reset the thing
 
   set_3300_value (SIS3300_ACQUISITION_CONTROL , 0xffff0000);  // clear everything
@@ -235,6 +252,10 @@ int  daq_device_sis3300::endrun()
 int  daq_device_sis3300::rearm(const int etype)
 {
   if (etype != m_eventType) return 0;
+  if ( !m_subeventid)  // this feature allows us to use this device without hardware 
+    {
+      return 0;
+    }
 
   set_3300_value (SIS3300_KEY_BANK1_FULL_FLAG , 1);  // enable memory bank 1
 

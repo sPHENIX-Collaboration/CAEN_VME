@@ -40,21 +40,26 @@ int CAEN_V1718TriggerHandler::wait_for_trigger( const int moreinfo)
 
       if (data != olddata) 
       	{
-	  //  cout << hex << data << endl;
-	  if ( olddata == 0 && data != 0 )
+	  //cout << hex << data << endl;
+	  if ( olddata == 0 && data == 6 )  // I have no idea why, but input 0 yields this value
 	    {
-	      //	      cout << __FILE__ << "  " << __LINE__ << " trigger " << endl; 
-	      return 0;
+	      //	      cout << __FILE__ << "  " << __LINE__ << " trigger " << data << endl; 
+	      return 1;
+	    }
+	  if ( olddata == 0 && data == 5 )  // input 1 yields this value
+	    {
+	      //cout << __FILE__ << "  " << __LINE__ << " Spill-off trigger " << data << endl; 
+	      return 16;   // 16 is a spill-off
 	    }
 	  olddata = data;
 	}
     }
-  return 1;
+  return 0;
 }
 
 int CAEN_V1718TriggerHandler::rearm()
 {
   //  cout << __FILE__ << "  " << __LINE__ << " rearming " << endl; 
-  CAENVME_API ret = CAENVME_PulseOutputRegister(_handle, (cvOut0Bit) );
+  CAENVME_API ret = CAENVME_PulseOutputRegister(_handle, (cvOut0Bit | cvOut1Bit) );
   return 0;
 }
