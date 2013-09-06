@@ -78,16 +78,6 @@ int daq_device_sis3300::put_data(const int etype, int * adr, const int length )
 {
   //  cout << __LINE__ << "  " << __FILE__ << " etype= " << etype << " adr= " << adr << " length= " << length << endl;
 
-  if (etype != m_eventType )  // not our id
-    {
-      return 0;
-    }
-
-  if ( !m_subeventid)  // this feature allows us to use this device without hardware 
-    {
-      return 0;
-    }
-
   if ( _broken ) 
     {
       cout << __LINE__ << "  " << __FILE__ << " broken ";
@@ -96,6 +86,17 @@ int daq_device_sis3300::put_data(const int etype, int * adr, const int length )
     }
 
   int len = 0;
+
+  if ( !m_subeventid )  // this feature allows us to use this device without hardware
+    {
+      return 0;
+    }
+
+
+  if (etype != m_eventType )  // not our id
+    {
+      return 0;
+    }
 
   sevt =  (subevtdata_ptr) adr;
   // set the initial subevent length
@@ -127,16 +128,18 @@ int daq_device_sis3300::put_data(const int etype, int * adr, const int length )
   CAENVME_API ret = CAENVME_ReadCycle (_handle, sample_cnt , &position, cvA32_U_DATA, cvD32);
   if ( ret) cout << __FILE__ << " " << __LINE__ << " return code " << ret << endl;
 
+  position &= 0x1ffff;
+
   int start_adr = (position + samplelength - _look_back) % samplelength;
   int count;
   int i;
 
   if ( ( start_adr + _samples) < samplelength )
     {  
-      
+      //     cout << __LINE__ << "  " << __FILE__ << " case 1 start_adr = " << start_adr << endl;
       for ( i = 0; i < 4; i++)
 	{
-	  unsigned int adr = bank[i];
+	  unsigned int adr = bank[i] + start_adr*4;
 	  ret = CAENVME_BLTReadCycle( _handle, adr, (void *)d,
 				      4*_samples, cvA32_U_MBLT , cvD64, &count);
 	
@@ -160,6 +163,8 @@ int daq_device_sis3300::put_data(const int etype, int * adr, const int length )
     }
   else
     {
+      //  cout << __LINE__ << "  " << __FILE__ << " case 2 start_adr = " << start_adr << endl;
+
       int n = samplelength - start_adr; // so many samples until high end
       for ( i = 0; i < 4; i++)
 	{
@@ -230,10 +235,11 @@ int daq_device_sis3300::max_length(const int etype) const
 int  daq_device_sis3300::init()
 {
 
-  if ( !m_subeventid)  // this feature allows us to use this device without hardware 
+  if ( !m_subeventid )  // this feature allows us to use this device without hardware
     {
       return 0;
     }
+
   set_3300_value (SIS3300_RESET , 1);  //reset the thing
 
   set_3300_value (SIS3300_ACQUISITION_CONTROL , 0xffff0000);  // clear everything
@@ -252,7 +258,8 @@ int  daq_device_sis3300::endrun()
 int  daq_device_sis3300::rearm(const int etype)
 {
   if (etype != m_eventType) return 0;
-  if ( !m_subeventid)  // this feature allows us to use this device without hardware 
+
+  if ( !m_subeventid )  // this feature allows us to use this device without hardware
     {
       return 0;
     }
