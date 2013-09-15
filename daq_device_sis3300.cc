@@ -245,6 +245,10 @@ int  daq_device_sis3300::init()
   set_3300_value (SIS3300_ACQUISITION_CONTROL , 0xffff0000);  // clear everything
   set_3300_value (SIS3300_ACQUISITION_CONTROL , 0x180 );  // enable front panel stop + stop delay
 
+   
+  // and we trigger rearm with our event type so it takes effect
+  rearm (m_eventType);
+
   return 0;
 
 }
