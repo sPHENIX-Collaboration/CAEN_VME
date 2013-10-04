@@ -3,6 +3,7 @@ AUTOMAKE_OPTIONS = foreign
 allsources = \
 	CAEN_V1718TriggerHandler.cc \
 	daq_device_sis3300.cc \
+	daq_device_V1718pulse.cc \
 	CAEN_VME_plugin.cc \
 	CAEN_V1718.cc 
 
@@ -18,6 +19,7 @@ lib_LTLIBRARIES =  librcdaqplugin_caen_vme.la
 librcdaqplugin_caen_vme_la_SOURCES = \
 	CAEN_V1718TriggerHandler.cc \
 	daq_device_sis3300.cc \
+	daq_device_V1718pulse.cc \
 	CAEN_VME_plugin.cc \
 	CAEN_V1718.cc 
 

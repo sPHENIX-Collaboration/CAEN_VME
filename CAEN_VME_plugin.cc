@@ -3,6 +3,7 @@
 #include "CAEN_V1718.h"
 
 #include <daq_device_sis3300.h>
+#include <daq_device_V1718pulse.h>
 
 #include <strings.h>
 #include <iostream>
@@ -86,6 +87,31 @@ int CAEN_VME_plugin::create_device(deviceblock *db)
 	  return 0;  // say "we handled this request" 
 	}	  
     } 
+
+
+  else if ( strcasecmp(db->argv0,"device_v1718pulse") == 0 ) 
+    {
+
+      // params:
+      // 1 - event type
+      // 2 - packet id
+      // 3 - pattern
+
+      // we need at least 4
+      if ( db->npar < 4 ) return 1; // indicate wrong params
+      
+      int eventtype  = atoi ( db->argv1); // event type
+      int subid = atoi ( db->argv2); // subevent id
+      
+      daq_device *x = new daq_device_V1718pulse( eventtype,
+						 subid,
+						 atoi (db->argv3));
+
+
+      add_readoutdevice (x);
+      return 0;  // say "we handled this request" 
+    }  
+  
   return -1; // say " this is not our device"
 }
 
@@ -110,5 +136,5 @@ void CAEN_VME_plugin::identify(std::ostream& os, const int flag) const
       
 }
 
-CAEN_VME_plugin _sp;
+CAEN_VME_plugin _caenplugin;
 

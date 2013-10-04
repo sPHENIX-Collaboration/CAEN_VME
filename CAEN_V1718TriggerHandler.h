@@ -24,6 +24,7 @@ public:
   int _handle;
 
   int _go;
+  int _reset_on_next;
 
 };
 

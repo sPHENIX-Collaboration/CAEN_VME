@@ -10,6 +10,7 @@ CAEN_V1718TriggerHandler::CAEN_V1718TriggerHandler(int handle)
 {
   _go = 0;
   _handle = handle;
+  _reset_on_next = 0;
 
   CAENVME_API ret;
 
@@ -32,18 +33,27 @@ int CAEN_V1718TriggerHandler::wait_for_trigger( const int moreinfo)
   unsigned int olddata =0 ;
   unsigned int data;
 
+  CAENVME_API ret;
   //  CAENVME_API ret = CAENVME_ReadRegister(_handle,cvInputReg, &olddata);
 
   while ( _go )
     {
-      CAENVME_API ret = CAENVME_ReadRegister(_handle,cvInputReg, &data);
+      if ( _reset_on_next )
+      	{
+      	  ret = CAENVME_PulseOutputRegister(_handle, (cvOut0Bit | cvOut1Bit) );
+      	  _reset_on_next = 0;
+      	  //    	  usleep (30);
+      	}
+  
+      ret = CAENVME_ReadRegister(_handle,cvInputReg, &data);
+      //cout << __FILE__ << "  " << __LINE__ << "  " << data <<  "  " << olddata << endl; 
 
       if (data != olddata) 
       	{
 	  //cout << hex << data << endl;
 	  if ( olddata == 0 && data == 6 )  // I have no idea why, but input 0 yields this value
 	    {
-	      //	      cout << __FILE__ << "  " << __LINE__ << " trigger " << data << endl; 
+	      //	      cout << __FILE__ << "  " << __LINE__ << " data trigger " << data << endl; 
 	      return 1;
 	    }
 	  if ( olddata == 0 && data == 5 )  // input 1 yields this value
@@ -60,6 +70,7 @@ int CAEN_V1718TriggerHandler::wait_for_trigger( const int moreinfo)
 int CAEN_V1718TriggerHandler::rearm()
 {
   //  cout << __FILE__ << "  " << __LINE__ << " rearming " << endl; 
-  CAENVME_API ret = CAENVME_PulseOutputRegister(_handle, (cvOut0Bit | cvOut1Bit) );
+  _reset_on_next = 1;
+  //  CAENVME_API ret = CAENVME_PulseOutputRegister(_handle, (cvOut0Bit | cvOut1Bit) );
   return 0;
 }
