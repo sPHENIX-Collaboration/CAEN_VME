@@ -11,7 +11,9 @@ CAEN_V1718TriggerHandler::CAEN_V1718TriggerHandler(int handle)
   _go = 0;
   _handle = handle;
   _reset_on_next = 0;
-
+  _trigger_register = 0;
+  _old_trigger_register = 0;
+  
   CAENVME_API ret;
 
   // set up inputs 0 and 1 
@@ -30,8 +32,6 @@ CAEN_V1718TriggerHandler::CAEN_V1718TriggerHandler(int handle)
 
 int CAEN_V1718TriggerHandler::wait_for_trigger( const int moreinfo)
 {
-  unsigned int olddata =0 ;
-  unsigned int data;
 
   CAENVME_API ret;
   //  CAENVME_API ret = CAENVME_ReadRegister(_handle,cvInputReg, &olddata);
@@ -45,23 +45,26 @@ int CAEN_V1718TriggerHandler::wait_for_trigger( const int moreinfo)
       	  //    	  usleep (30);
       	}
   
-      ret = CAENVME_ReadRegister(_handle,cvInputReg, &data);
-      //cout << __FILE__ << "  " << __LINE__ << "  " << data <<  "  " << olddata << endl; 
+      ret = CAENVME_ReadRegister(_handle,cvInputReg, &_trigger_register);
+      //      cout << __FILE__ << "  " << __LINE__ << "  " << data <<  "  " << olddata << endl; 
 
-      if (data != olddata) 
+      if (_trigger_register != _old_trigger_register) 
       	{
-	  //cout << hex << data << endl;
-	  if ( olddata == 0 && data == 6 )  // I have no idea why, but input 0 yields this value
+	  //cout << hex << _trigger_register << endl;
+	  if ( _old_trigger_register == 0 && _trigger_register == 6 )  // I have no idea why, but input 0 yields this value
 	    {
-	      //	      cout << __FILE__ << "  " << __LINE__ << " data trigger " << data << endl; 
+	      static int c = 0;
+	      //	      cout << __FILE__ << "  " << __LINE__ << " data trigger " << _old_trigger_register << "  " <<  _trigger_register << "  trig nr " << c++ << endl; 
+	      _old_trigger_register =  _trigger_register;
 	      return 1;
 	    }
-	  if ( olddata == 0 && data == 5 )  // input 1 yields this value
+	  if ( _old_trigger_register == 0 && _trigger_register == 5 )  // input 1 yields this value
 	    {
 	      //cout << __FILE__ << "  " << __LINE__ << " Spill-off trigger " << data << endl; 
+	      _old_trigger_register =  _trigger_register;
 	      return 16;   // 16 is a spill-off
 	    }
-	  olddata = data;
+	  _old_trigger_register =  _trigger_register;
 	}
     }
   return 0;

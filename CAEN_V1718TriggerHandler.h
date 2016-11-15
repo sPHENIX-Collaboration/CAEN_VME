@@ -26,6 +26,9 @@ public:
   int _go;
   int _reset_on_next;
 
+  unsigned int _trigger_register;
+  unsigned int _old_trigger_register;
+  
 };
 
 #endif
